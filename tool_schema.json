@@ -1,0 +1,110 @@
+[
+    {
+        "name": "get_absence_types_for_employee",
+        "description": "Get the absence type IDs, and Employer IDs which are available in Oracle HCM for a particular employee. This data is used during projection of employee absence balances.",
+        "outputSchema": {
+            "type": "object",
+            "description": "Array of absence types associated with the employee.",
+            "items": [
+                {
+                    "AbsenceTypeId": {
+                        "type": "string",
+                        "description": "The unique identifier for the absence type."
+                    },
+                    "EmployerId": {
+                        "type": "string",
+                        "description": "The unique identifier for the employer associated with the absence type."
+                    },
+                    "AbsenceTypeName": {
+                        "type": "string",
+                        "description": "The name of the absence type."
+                    }
+                }
+            ],
+            "required": [
+                "AbsenceTypeId",
+                "EmployerId",
+                "AbsenceTypeName"
+            ]
+        }
+    },
+    {
+        "name": "get_all_absence_balances_for_employee",
+        "description": "Get all available absence balances for a particular employee (the balances are based off a system calculation date, and not projected balances).",
+        "outputSchema": {
+            "type": "object",
+            "description": "Array of absence balances associated with the employee.",
+            "items": [
+                {
+                    "planName": {
+                        "type": "string",
+                        "description": "The name of the absence plan."
+                    },
+                    "carryOver": {
+                        "type": "boolean",
+                        "description": "Indicates if the balance can be carried over."
+                    },
+                    "planStatus": {
+                        "type": "string",
+                        "description": "Whether the plan is active or inactive."
+                    },
+                    "formattedBalance": {
+                        "type": "number",
+                        "description": "The formatted balance value in hours."
+                    },
+                    "balanceCalculationDate": {
+                        "type": "string",
+                        "description": "The date when the balance was calculated by the system in DD-MM-YYYY format."
+                    }
+                }
+            ],
+            "required": [
+                "planName",
+                "carryOver",
+                "planStatus",
+                "formattedBalance",
+                "balanceCalculationDate"
+            ]
+        }
+    },
+    {
+        "name": "get_projected_balance",
+        "description": "Get projected balance as well as a projection date/effective date in DD-MM-YYYY format (Balance As Of Date), for a particular AbsenceTypeId",
+        "inputSchema": {
+            "type": "object",
+            "description": "Input schema for projected balance request.",
+            "properties": {
+                "AbsenceTypeId": {
+                    "type": "string",
+                    "description": "The unique identifier for the absence type."
+                },
+                "endDate": {
+                    "type": "string",
+                    "description": "The end date for the projection in DD-MM-YYYY format."
+                }
+            },
+            "required": [
+                "AbsenceTypeId",
+                "endDate"
+            ]
+        },
+        "outputSchema": {
+            "type": "object",
+            "description": "string",
+            "properties": {
+                "absenceTypeId": {
+                    "type": "string",
+                    "description": "The unique identifier for the absence type."
+                },
+                "projectedBalance": {
+                    "type": "number",
+                    "description": "The projected balance value in hours."
+                }
+            },
+            "required": [
+                "absenceTypeId",
+                "projectedBalance"
+            ]
+        }
+    }
+]
