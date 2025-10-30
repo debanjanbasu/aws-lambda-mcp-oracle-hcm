@@ -18,7 +18,7 @@ reqwest = { version = "0.12", default-features = false, features = [
     "brotli",
     "zstd",
     "deflate",
-    "http3"
+    "http3",
 ] }
 reqwest-middleware = "0.4"
 reqwest-tracing = "0.5"
@@ -48,9 +48,9 @@ string_slice = "deny"
 pedantic = "deny"
 
 [package.metadata.lambda.deploy]
-memory = 128                    # Function's memory
-timeout = 30                    # Function's execution timeout
-tracing = "active"              # Tracing mode
+memory = 128       # Function's memory
+timeout = 30       # Function's execution timeout
+tracing = "active" # Tracing mode
 # role = "role-full-arn"          # Function's execution role
 # env_file = ".env.production"    # File to load environment variables from
 # env = { "VAR1" = "VAL1" }       # Additional environment variables

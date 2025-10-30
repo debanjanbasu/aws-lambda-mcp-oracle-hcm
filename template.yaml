@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  AWS Lambda MCP function built with Rust and optimized with UPX
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 128
+    Architectures:
+      - arm64
+    Runtime: provided.al2023
+
+Resources:
+  AwsLambdaMcpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: aws-lambda-mcp
+      CodeUri: target/lambda/aws-lambda-mcp/
+      Handler: bootstrap
+      Role: arn:aws:iam::305536002126:role/StackSet-AWS-Landing-Zone-Baseline-IamPa-LambdaRole-4bXf9qkMeuGN
+
+Outputs:
+  AwsLambdaMcpFunctionArn:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt AwsLambdaMcpFunction.Arn

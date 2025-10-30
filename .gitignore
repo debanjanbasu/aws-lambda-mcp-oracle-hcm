@@ -2,3 +2,5 @@
 .env
 **/*.pem
 .DS_Store
+# AWS SAM build artifacts
+.aws-sam/

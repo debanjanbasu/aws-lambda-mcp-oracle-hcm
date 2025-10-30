@@ -1,0 +1,28 @@
+version = 0.1
+
+[default.build.parameters]
+use_container = true
+cached = true
+parallel = true
+beta_features = true
+
+[default.deploy.parameters]
+stack_name = "aws-lambda-mcp-stack"
+# capabilities = "CAPABILITY_IAM"      # Add if your stack creates IAM resources
+confirm_changeset = false            # Set to true if you want to review changes before deployment
+resolve_s3 = true
+s3_prefix = "aws-lambda-mcp-stack"
+image_repositories = []
+disable_rollback = true
+
+[default.global.parameters]
+region = "ap-southeast-2"
+
+[default.sync.parameters]
+watch = true
+beta_features = true
+
+[prod]
+[prod.sync]
+[prod.sync.parameters]
+watch = false
