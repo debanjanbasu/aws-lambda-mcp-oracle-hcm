@@ -1,7 +1,46 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >-
-  AWS Lambda MCP function built with Rust and optimized with UPX
+Description: AWS Lambda MCP function built with Rust and optimized with UPX
+
+Parameters:
+  EntraIdTenantId:
+    Type: String
+    Description: Microsoft Entra ID Tenant ID
+    
+  EntraIdClientId:
+    Type: String
+    Description: Microsoft Entra ID Application Client ID
+    
+  EntraIdDiscoveryUrl:
+    Type: String
+    Description: Microsoft Entra ID Discovery URL (leave empty to auto-generate from Tenant ID)
+    Default: ''
+    
+  GatewayName:
+    Type: String
+    Default: aws-lambda-mcp-gateway
+    Description: Name for the AgentCore Gateway
+    
+  LambdaRoleArn:
+    Type: String
+    Description: IAM Role ARN for Lambda execution
+    
+  GatewayRoleArn:
+    Type: String
+    Description: IAM Role ARN for AgentCore Gateway
+    
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, test, prod]
+    Description: Environment name for tagging
+    
+  ToolSchemaS3Uri:
+    Type: String
+    Description: S3 URI for tool_schema.json (s3://bucket/key)
+
+Conditions:
+  UseDefaultDiscoveryUrl: !Equals [!Ref EntraIdDiscoveryUrl, '']
 
 Globals:
   Function:
@@ -10,31 +49,101 @@ Globals:
     Architectures:
       - arm64
     Runtime: provided.al2023
+    Tags:
+      Environment: !Ref Environment
+      Project: aws-lambda-mcp-oracle-hcm
 
 Resources:
   AwsLambdaMcpFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: aws-lambda-mcp
+      FunctionName: !Sub ${GatewayName}-function
       CodeUri: target/lambda/aws-lambda-mcp/
       Handler: bootstrap
-      Role: arn:aws:iam::305536002126:role/StackSet-AWS-Landing-Zone-Baseline-IamPa-LambdaRole-4bXf9qkMeuGN
-  # BedrockAgentCoreGateway:
-  #   Type: AWS::BedrockAgentCore::Gateway
-  #   Properties:
-  #     AuthorizerConfiguration: 
-  #       AuthorizerConfiguration
-  #     AuthorizerType: String
-  #     Description: String
-  #     ExceptionLevel: String
-  #     KmsKeyArn: String
-  #     Name: String
-  #     ProtocolConfiguration: 
-  #       GatewayProtocolConfiguration
-  #     ProtocolType: String
-  #     RoleArn: String
+      Role: !Ref LambdaRoleArn
+      AutoPublishAlias: live
+      Environment:
+        Variables:
+          GATEWAY_NAME: !Ref GatewayName
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AwsLambdaMcpFunction
+      Action: lambda:InvokeFunction
+      Principal: !Ref AWS::AccountId
+      SourceArn: !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:gateway/*
+
+  BedrockAgentCoreGateway:
+    Type: AWS::BedrockAgentCore::Gateway
+    Properties:
+      Name: !Ref GatewayName
+      Description: AgentCore Gateway with Entra ID authentication and Lambda target
+      RoleArn: !Ref GatewayRoleArn
+      ProtocolType: MCP
+      AuthorizerType: CUSTOM_JWT
+      AuthorizerConfiguration:
+        CustomJWTAuthorizer:
+          AllowedAudience:
+            - !Ref EntraIdClientId
+          DiscoveryUrl: !If
+            - UseDefaultDiscoveryUrl
+            - !Sub https://login.microsoftonline.com/${EntraIdTenantId}/v2.0/.well-known/openid-configuration
+            - !Ref EntraIdDiscoveryUrl
+
+  BedrockAgentCoreGatewayTarget:
+    Type: AWS::BedrockAgentCore::GatewayTarget
+    Properties:
+      GatewayIdentifier: !Ref BedrockAgentCoreGateway
+      Name: RustMcpLambdaTarget
+      Description: Lambda target for Rust MCP function
+      TargetConfiguration:
+        Mcp:
+          Lambda:
+            LambdaArn: !Ref AwsLambdaMcpFunction.Alias
+            ToolSchema:
+              S3:
+                BucketOwnerAccountId: !Ref AWS::AccountId
+                Uri: !Ref ToolSchemaS3Uri
+      CredentialProviderConfigurations:
+        - CredentialProviderType: GATEWAY_IAM_ROLE
 
 Outputs:
   AwsLambdaMcpFunctionArn:
-    Description: "Lambda Function ARN"
+    Description: Lambda Function ARN
     Value: !GetAtt AwsLambdaMcpFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaArn'
+      
+  GatewayId:
+    Description: AgentCore Gateway ID
+    Value: !Ref BedrockAgentCoreGateway
+    Export:
+      Name: !Sub '${AWS::StackName}-GatewayId'
+      
+  GatewayUrl:
+    Description: AgentCore Gateway URL
+    Value: !GetAtt BedrockAgentCoreGateway.GatewayUrl
+    Export:
+      Name: !Sub '${AWS::StackName}-GatewayUrl'
+      
+  GatewayTargetId:
+    Description: Gateway Target ID
+    Value: !Ref BedrockAgentCoreGatewayTarget
+    Export:
+      Name: !Sub '${AWS::StackName}-GatewayTargetId'
+
+  UsageInstructions:
+    Description: Instructions for using the deployed gateway
+    Value: !Sub |
+      Gateway deployed successfully!
+      Gateway ID: ${BedrockAgentCoreGateway}
+      Gateway URL: ${BedrockAgentCoreGateway.GatewayUrl}
+      
+      Authenticate with Entra ID (Client ID: ${EntraIdClientId}) and include JWT in Authorization header.
+      
+      Example:
+      curl -X POST "${BedrockAgentCoreGateway.GatewayUrl}/mcp/v1/tools/call" \
+        -H "Authorization: Bearer <TOKEN>" \
+        -H "Content-Type: application/json" \
+        -d '{"name": "get_absence_types_for_employee", "arguments": {}}'
