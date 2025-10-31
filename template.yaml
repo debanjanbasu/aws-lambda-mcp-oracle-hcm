@@ -19,6 +19,20 @@ Resources:
       CodeUri: target/lambda/aws-lambda-mcp/
       Handler: bootstrap
       Role: arn:aws:iam::305536002126:role/StackSet-AWS-Landing-Zone-Baseline-IamPa-LambdaRole-4bXf9qkMeuGN
+  # BedrockAgentCoreGateway:
+  #   Type: AWS::BedrockAgentCore::Gateway
+  #   Properties:
+  #     AuthorizerConfiguration: 
+  #       AuthorizerConfiguration
+  #     AuthorizerType: String
+  #     Description: String
+  #     ExceptionLevel: String
+  #     KmsKeyArn: String
+  #     Name: String
+  #     ProtocolConfiguration: 
+  #       GatewayProtocolConfiguration
+  #     ProtocolType: String
+  #     RoleArn: String
 
 Outputs:
   AwsLambdaMcpFunctionArn:

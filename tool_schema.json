@@ -2,11 +2,15 @@
     {
         "name": "get_absence_types_for_employee",
         "description": "Get the absence type IDs, and Employer IDs which are available in Oracle HCM for a particular employee. This data is used during projection of employee absence balances.",
-        "outputSchema": {
+        "inputSchema": {
             "type": "object",
-            "description": "Array of absence types associated with the employee.",
-            "items": [
-                {
+            "properties": {}
+        },
+        "outputSchema": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
                     "AbsenceTypeId": {
                         "type": "string",
                         "description": "The unique identifier for the absence type."
@@ -19,23 +23,27 @@
                         "type": "string",
                         "description": "The name of the absence type."
                     }
-                }
-            ],
-            "required": [
-                "AbsenceTypeId",
-                "EmployerId",
-                "AbsenceTypeName"
-            ]
+                },
+                "required": [
+                    "AbsenceTypeId",
+                    "EmployerId",
+                    "AbsenceTypeName"
+                ]
+            }
         }
     },
     {
         "name": "get_all_absence_balances_for_employee",
         "description": "Get all available absence balances for a particular employee (the balances are based off a system calculation date, and not projected balances).",
-        "outputSchema": {
+        "inputSchema": {
             "type": "object",
-            "description": "Array of absence balances associated with the employee.",
-            "items": [
-                {
+            "properties": {}
+        },
+        "outputSchema": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
                     "planName": {
                         "type": "string",
                         "description": "The name of the absence plan."
@@ -56,15 +64,15 @@
                         "type": "string",
                         "description": "The date when the balance was calculated by the system in DD-MM-YYYY format."
                     }
-                }
-            ],
-            "required": [
-                "planName",
-                "carryOver",
-                "planStatus",
-                "formattedBalance",
-                "balanceCalculationDate"
-            ]
+                },
+                "required": [
+                    "planName",
+                    "carryOver",
+                    "planStatus",
+                    "formattedBalance",
+                    "balanceCalculationDate"
+                ]
+            }
         }
     },
     {
@@ -72,7 +80,6 @@
         "description": "Get projected balance as well as a projection date/effective date in DD-MM-YYYY format (Balance As Of Date), for a particular AbsenceTypeId",
         "inputSchema": {
             "type": "object",
-            "description": "Input schema for projected balance request.",
             "properties": {
                 "AbsenceTypeId": {
                     "type": "string",
@@ -90,7 +97,6 @@
         },
         "outputSchema": {
             "type": "object",
-            "description": "string",
             "properties": {
                 "absenceTypeId": {
                     "type": "string",
